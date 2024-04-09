@@ -1,91 +1,151 @@
-import { Injectable } from '@nestjs/common';
-import { CreateTaskDto } from './task.dto';
+import { HttpException, Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { CreateTaskDto, TaskStatus } from './dto/task.dto';
+import { Task, TaskDocument } from './models/task.schema';
 
 @Injectable()
 export class TaskService {
-    taskList = [];
+    constructor(
+        @InjectModel(Task.name) private taskModel: Model<TaskDocument>
+    ) { }
 
-    findAll() {
-        return {
-            data: this.taskList,
-            message: 'Task list get successfully',
-            status: 200
-        };
+    async findAll() {
+        try {
+            const tasks = await this.taskModel.find({});
+            return {
+                data: tasks,
+                error: [],
+                message: 'Task list fetched successfully',
+                status: true
+            }
+        } catch (err) {
+            throw new HttpException({
+                status: false,
+                message: err.message,
+                error: err.error,
+            }, err.status)
+        }
     }
 
-    findOne(id: string) {
-        const task = this.taskList.find((task) => task.id === id);
-        if (task) {
+    async findOne(taskId: string) {
+        try {
+            const task = await this.taskModel.findOne({ _id: taskId });
+            if (task) {
+                return {
+                    data: task,
+                    message: 'Task get successfully',
+                    status: 200
+                }
+            }
             return {
-                data: task,
-                message: 'Task get successfully',
+                message: 'Task not found',
                 status: 200
             }
-        }
-        return {
-            message: 'Task not found',
-            status: 200
-        }
-    }
-
-    create(task: CreateTaskDto) {
-        const taskObj = { id: `task${this.taskList.length + 1}`, ...task };
-        this.taskList.push(taskObj);
-        return {
-            data: this.taskList,
-            message: 'Task created successfully',
-            status: 200
+        } catch (err) {
+            throw new HttpException({
+                status: false,
+                message: err.message,
+                error: err.error,
+            }, err.status)
         }
     }
 
-    update(task: CreateTaskDto) {
-        const index = this.taskList.findIndex((item) => item.id === task.id);
-
-        if (index !== -1) {
-            this.taskList[index] = task;
-            console.log(this.taskList);
-
+    async create(task: CreateTaskDto) {
+        try {
+            const newTask = new this.taskModel(task);
+            const createdTask = await newTask.save();
             return {
-                data: this.taskList,
+                data: createdTask,
+                message: 'Task created successfully',
+                status: true
+            }
+        } catch (err) {
+            throw new HttpException({
+                status: false,
+                message: err.message,
+                error: err.error,
+            }, err.status)
+        }
+    }
+
+    async update(taskId: string, taskDto: CreateTaskDto) {
+        try {
+            const task = await this.taskModel.findOne({ _id: taskId });
+            if (!task) {
+                return {
+                    message: 'Task not found',
+                    status: 200
+                }
+            }
+            const updatedTask = await this.taskModel.findOneAndUpdate(
+                { _id: taskId },
+                taskDto,
+                { new: true }
+            );
+            return {
+                data: updatedTask,
                 message: 'Task updated successfully',
                 status: 200
             }
-        }
-        return {
-            message: 'Task not found',
-            status: 200
-        }
-    }
-
-    delete(id: string) {
-        const index = this.taskList.findIndex((item) => item.id === id);
-        if (index !== -1) {
-            this.taskList.splice(index, 1);
-            return {
-                data: this.taskList,
-                message: 'Task deleted successfully',
-                status: 200
-            }
-        }
-        return {
-            message: 'Task not found',
-            status: 200
+        } catch (err) {
+            throw new HttpException({
+                status: false,
+                message: err.message,
+                error: err.error,
+            }, err.status)
         }
     }
 
-    updateStatus(id: string, newTask: Partial<CreateTaskDto>) {
-        const task = this.taskList.find((item) => item.id === id);
-        if (task) {
-            task.status = newTask.status;
+    async delete(id: string) {
+        try {
+            const task = await this.taskModel.findOne({ _id: id });
+            if (!task) {
+                return {
+                    message: 'Task not found',
+                    status: 200
+                }
+            }
+            await this.taskModel.findOneAndDelete({ _id: id }).exec();
             return {
-                data: task,
-                message: 'Task status updated successfully',
+                message: 'Task deleted Successfully',
+                status: 200,
+            }
+        } catch (err) {
+            throw new HttpException({
+                status: false,
+                message: err.message,
+                error: err.error,
+            }, err.status)
+        }
+
+    }
+
+    async updateStatus(id: string, taskStatus: TaskStatus) {
+        try {
+            const task = await this.taskModel.findOne({ _id: id });
+            if (!task) {
+                return {
+                    message: 'Task not found',
+                    status: 200
+                }
+            }
+            const updatedTask = await this.taskModel.findOneAndUpdate(
+                { _id: id },
+                { status: taskStatus },
+                { new: true }
+            );
+            return {
+                data: updatedTask,
+                message: 'Task updated successfully',
                 status: 200
             }
-        }
-        return {
-            message: 'Task not found',
-            status: 200
+        } catch (err) {
+            throw new HttpException({
+                status: false,
+                message: err.message,
+                error: err.error,
+            }, err.status)
         }
     }
 

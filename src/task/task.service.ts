@@ -1,4 +1,4 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateTaskDto, TaskStatus } from './dto/task.dto';
@@ -11,141 +11,92 @@ export class TaskService {
     ) { }
 
     async findAll() {
-        try {
-            const tasks = await this.taskModel.find({});
-            return {
-                data: tasks,
-                error: [],
-                message: 'Task list fetched successfully',
-                status: true
-            }
-        } catch (err) {
-            throw new HttpException({
-                status: false,
-                message: err.message,
-                error: err.error,
-            }, err.status)
+        const tasks = await this.taskModel.find({});
+        return {
+            data: tasks,
+            error: [],
+            message: 'Task list fetched successfully',
+            status: true
         }
     }
 
     async findOne(taskId: string) {
-        try {
-            const task = await this.taskModel.findOne({ _id: taskId });
-            if (task) {
-                return {
-                    data: task,
-                    message: 'Task get successfully',
-                    status: 200
-                }
-            }
+        const task = await this.taskModel.findOne({ _id: taskId });
+        if (task) {
             return {
-                message: 'Task not found',
+                data: task,
+                message: 'Task get successfully',
                 status: 200
             }
-        } catch (err) {
-            throw new HttpException({
-                status: false,
-                message: err.message,
-                error: err.error,
-            }, err.status)
+        }
+        return {
+            message: 'Task not found',
+            status: 200
         }
     }
 
     async create(task: CreateTaskDto) {
-        try {
-            const newTask = new this.taskModel(task);
-            const createdTask = await newTask.save();
-            return {
-                data: createdTask,
-                message: 'Task created successfully',
-                status: true
-            }
-        } catch (err) {
-            throw new HttpException({
-                status: false,
-                message: err.message,
-                error: err.error,
-            }, err.status)
+        const newTask = new this.taskModel(task);
+        const createdTask = await newTask.save();
+        return {
+            data: createdTask,
+            message: 'Task created successfully',
+            status: true
         }
     }
 
     async update(taskId: string, taskDto: CreateTaskDto) {
-        try {
-            const task = await this.taskModel.findOne({ _id: taskId });
-            if (!task) {
-                return {
-                    message: 'Task not found',
-                    status: 200
-                }
-            }
-            const updatedTask = await this.taskModel.findOneAndUpdate(
-                { _id: taskId },
-                taskDto,
-                { new: true }
-            );
+        const task = await this.taskModel.findOne({ _id: taskId });
+        if (!task) {
             return {
-                data: updatedTask,
-                message: 'Task updated successfully',
+                message: 'Task not found',
                 status: 200
             }
-        } catch (err) {
-            throw new HttpException({
-                status: false,
-                message: err.message,
-                error: err.error,
-            }, err.status)
+        }
+        const updatedTask = await this.taskModel.findOneAndUpdate(
+            { _id: taskId },
+            taskDto,
+            { new: true }
+        );
+        return {
+            data: updatedTask,
+            message: 'Task updated successfully',
+            status: 200
         }
     }
 
     async delete(id: string) {
-        try {
-            const task = await this.taskModel.findOne({ _id: id });
-            if (!task) {
-                return {
-                    message: 'Task not found',
-                    status: 200
-                }
-            }
-            await this.taskModel.findOneAndDelete({ _id: id }).exec();
+        const task = await this.taskModel.findOne({ _id: id });
+        if (!task) {
             return {
-                message: 'Task deleted Successfully',
-                status: 200,
+                message: 'Task not found',
+                status: 200
             }
-        } catch (err) {
-            throw new HttpException({
-                status: false,
-                message: err.message,
-                error: err.error,
-            }, err.status)
         }
-
+        await this.taskModel.findOneAndDelete({ _id: id }).exec();
+        return {
+            message: 'Task deleted Successfully',
+            status: 200,
+        }
     }
 
     async updateStatus(id: string, taskStatus: TaskStatus) {
-        try {
-            const task = await this.taskModel.findOne({ _id: id });
-            if (!task) {
-                return {
-                    message: 'Task not found',
-                    status: 200
-                }
-            }
-            const updatedTask = await this.taskModel.findOneAndUpdate(
-                { _id: id },
-                { status: taskStatus },
-                { new: true }
-            );
+        const task = await this.taskModel.findOne({ _id: id });
+        if (!task) {
             return {
-                data: updatedTask,
-                message: 'Task updated successfully',
+                message: 'Task not found',
                 status: 200
             }
-        } catch (err) {
-            throw new HttpException({
-                status: false,
-                message: err.message,
-                error: err.error,
-            }, err.status)
+        }
+        const updatedTask = await this.taskModel.findOneAndUpdate(
+            { _id: id },
+            { status: taskStatus },
+            { new: true }
+        );
+        return {
+            data: updatedTask,
+            message: 'Task updated successfully',
+            status: 200
         }
     }
 

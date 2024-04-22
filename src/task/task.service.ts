@@ -10,8 +10,10 @@ export class TaskService {
         @InjectModel(Task.name) private taskModel: Model<TaskDocument>
     ) { }
 
-    async findAll() {
-        const tasks = await this.taskModel.find({});
+    async findAll(page: number, limit: number) {
+        const startIndex = (page - 1) * limit;
+
+        const tasks = await this.taskModel.find({}).skip(startIndex).limit(limit).exec();
         return {
             data: tasks,
             error: [],
@@ -96,6 +98,14 @@ export class TaskService {
         return {
             data: updatedTask,
             message: 'Task updated successfully',
+            status: 200
+        }
+    }
+
+    async saveDates(date: Date) {
+        return {
+            data: date,
+            message: 'Date saved successfully',
             status: 200
         }
     }

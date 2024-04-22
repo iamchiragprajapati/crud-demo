@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Param, ParseEnumPipe, Post, Put } from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Delete, Get, Param, ParseEnumPipe, Post, Put, Query, UsePipes } from '@nestjs/common';
+import { CustomDatePipe } from 'src/pipes/custom-date/custom-date.pipe';
 import { CreateTaskDto, TaskStatus } from './dto/task.dto';
 import { TaskService } from './task.service';
 
@@ -9,8 +10,10 @@ export class TaskController {
     ) { }
 
     @Get()
-    async findAll() {
-        return this.taskService.findAll();
+    async findAll(
+        @Query('page', new DefaultValuePipe(1)) page: number,
+        @Query('limit', new DefaultValuePipe(10)) limit: number) {
+        return this.taskService.findAll(page, limit);
     }
 
     @Get(':id')
@@ -36,5 +39,11 @@ export class TaskController {
     @Put('status/:id')
     async updateStatus(@Param('id') taskId: string, @Body('status', new ParseEnumPipe(TaskStatus)) status: TaskStatus) {
         return this.taskService.updateStatus(taskId, status);
+    }
+
+    @Post('saveDate')
+    @UsePipes(new CustomDatePipe())
+    async saveDate(@Body('date') date: Date) {
+        return this.taskService.saveDates(date);
     }
 }

@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserDocument } from './models/user.schema';
 
 @Injectable()
@@ -22,19 +21,29 @@ export class UserService {
     }
   }
 
-  findAll() {
-    return `This action returns all user`;
+  async findAll() {
+    const users = await this.UserModel.find();
+    return {
+      data: users,
+      message: 'User list fetched successfully',
+      status: true
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
+  async findByAge(age: number) {
+    const user = await this.UserModel.find({ age: age });
+    if (user) {
+      return {
+        data: user,
+        message: 'User get successfully',
+        status: 200
+      }
+    } else {
+      return {
+        message: 'User not found',
+        status: 200
+      }
+    }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
   }
 }
